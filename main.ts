@@ -49,6 +49,7 @@ function generateGears(teethvalues:number[],firstradius,startpos:Vector):Gear[]{
     var firstCircumference = calccircumference(firstradius)
     var bigride = firstCircumference / teethvalues[0]
     var teethwidth = (bigride - 2 * slagmargin) / 2
+    // var teethwidth = 2
     var bigslag = teethwidth + slagmargin * 2
     
     var smallCircumference = 6 * (teethwidth * 2 + slagmargin)
@@ -122,35 +123,29 @@ function drawgear(gear:Gear){
     var teethriseangle = gear.slopewidth / gear.circumference
     var teethcoreangle = (gear.ride - gear.slag - 2 * gear.slopewidth) / gear.circumference
     var rot = gear.rotation
+    var inner = gear.radius - gear.dedendum
+    var outer = gear.radius + gear.addendum
+
     ctxt.beginPath()
+    moveTo(new Vector(0,-inner).rotate2d(rot).add(gear.pos))
     for(var i = 0; i < gear.teeth;i++){
-        var inner = gear.radius - gear.dedendum
-        var outer = gear.radius + gear.addendum
 
-        // lineTo(new Vector(0,-inner).rotate2d(rot))
-        // lineTo(new Vector(0,-outer).rotate2d(rot += teethriseangle))
-        // lineTo(new Vector(0,-outer).rotate2d(rot += teethcoreangle))
-        // var arcstart = new Vector(0,-inner).rotate2d(rot += teethriseangle)
-        // var arcend = new Vector(0,-inner).rotate2d(rot += slagangle)
-        // lineTo(arcstart)
-        // var controlpoint = gear.pos.to(arcstart.lerp(arcend,0.5)).normalize()
-        // arcTo(controlpoint,arcend,gear.radius)
-
-        path.push(new Vector(0,-inner).rotate2d(rot))
-        path.push(new Vector(0,-outer).rotate2d(rot += teethriseangle))
-        path.push(new Vector(0,-outer).rotate2d(rot += teethcoreangle))
-        path.push(new Vector(0,-inner).rotate2d(rot += teethriseangle))
-        path.push(new Vector(0,-inner).rotate2d(rot += slagangle))
+        lineTo(new Vector(0,-inner).rotate2d(rot).add(gear.pos))
+        lineTo(new Vector(0,-outer).rotate2d(rot += teethriseangle).add(gear.pos))
+        lineTo(new Vector(0,-outer).rotate2d(rot += teethcoreangle).add(gear.pos))
+        var arcstart = new Vector(0,-inner).rotate2d(rot += teethriseangle).add(gear.pos)
+        var arcend = new Vector(0,-inner).rotate2d(rot += slagangle).add(gear.pos)
+        lineTo(arcstart)
+        arcTo(arcstart,arcend,gear.pos)
     }
-    path.forEach(v => v.add(gear.pos))
-    linepath(path)
+    ctxt.stroke()
     circle(gear.pos,0.7,false)
     ctxt.textAlign = 'center'
     ctxt.textBaseline = 'middle'
     if(gear.axleConnected){
-        ctxt.fillText(gear.name,gear.pos.x,gear.pos.y - 10)
+        ctxt.fillText(gear.name,gear.pos.x,gear.pos.y - 15)
     }else{
-        ctxt.fillText(gear.name,gear.pos.x,gear.pos.y)
+        ctxt.fillText(gear.name,gear.pos.x,gear.pos.y + 5)
     }
 }
 
@@ -159,7 +154,7 @@ function drawgear(gear:Gear){
 
 
 
-document.querySelector('#gearinfo').innerHTML = JSON.stringify(gears.map(g => g.summarize()),null,2)
+// document.querySelector('#gearinfo').innerHTML = JSON.stringify(gears.map(g => g.summarize()),null,2)
 
 document.addEventListener('mousedown',() => {
     dragging = true
@@ -244,13 +239,15 @@ function lineTo(v:Vector){
     ctxt.lineTo(v.x,v.y)
 }
 
-function arcTo(p1:Vector,p2:Vector,radius:number){
-    ctxt.arcTo(p1.x,p1.y,p2.x,p2.y,radius)
+function moveTo(v:Vector){
+    ctxt.moveTo(v.x,v.y)
 }
 
-function arcTo2(start:Vector,end:Vector,center:Vector){
-
-    ctxt.arcTo()
+function arcTo(start:Vector,end:Vector,center:Vector){
+    var radius = center.to(start).length()
+    var halfway = center.to(start.lerp(end,0.5)).setMagnitude(radius).add(center)
+    ctxt.arcTo(halfway.x,halfway.y,end.x,end.y,radius)
+    lineTo(end)
 }
 
 function linepath(path:Vector[]){

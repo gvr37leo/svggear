@@ -64,6 +64,10 @@ class Vector{
         return this.scale(1 / this.length())
     }
 
+    setMagnitude(size:number){
+        return this.normalize().scale(size)
+    }
+
     to(v:Vector):Vector{
         return v.c().sub(this)
     }
