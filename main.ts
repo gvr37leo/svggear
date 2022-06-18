@@ -30,88 +30,153 @@ var dragging = false
 var mousepos = new Vector(0,0)
 
 
+// galileo-escapement
+// https://www.youtube.com/watch?v=-FEAN5k9Kyk&list=LL&index=1&t=655s
+// https://www.youtube.com/watch?v=v2sQF0UFVVE&list=LL&index=17
+// https://www.youtube.com/watch?v=tvd1USfd6QU&list=LL&index=16&t=1s
 
 // https://www.calculatorsoup.com/calculators/math/prime-factors.php
 
 //60 seconds,60 minutes,12 hours
 //60 * 12 = 720
 //6 * 6 * 5 * 4 =  720
-var gears = generateGears([36, 36, 30, 24],28,new Vector(0,0))//150
+// var gears = generateGears2([36, 36, 30, 24],28,new Vector(0,0))//150
 
 
-function generateGears(teethvalues:number[],firstradius,startpos:Vector):Gear[]{
+// 12 / 60 / 60
+// 4 * 3 / 5 * 4 * 3 / 4 * 15
+var smallteethcount = 6
+var gears = generateGears([4,3,5,3,2,2,4].map(v => v * smallteethcount),smallteethcount,new Vector(0,0))
+var gearlevels = [2,2,3,3,4,4,3,3,2,2,1,1,0,0,1]
+gears.forEach((g,i) => g.level = gearlevels[i])
+//0.083 days
+//1 hours
+//60 minutes
+//240 * 15 = 3600 seconds
+
+//todo
+//fix teethwidth on small gear
+//display secondsgear
+//fix clipping
+
+function generateGears(teethcounts:number[],smallteethcount,startpos:Vector):Gear[]{
     var alphabet = [ 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R',  'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z' ]
     var ai = 0;
     var gears:Gear[] = []
     
-    var currentpos = startpos.c()
-    var slagmargin = 1
-    var firstCircumference = calccircumference(firstradius)
-    var bigride = firstCircumference / teethvalues[0]
-    var teethwidth = (bigride - 2 * slagmargin) / 2
-    // var teethwidth = 2
-    var bigslag = teethwidth + slagmargin * 2
-    
-    var smallCircumference = 6 * (teethwidth * 2 + slagmargin)
-    var smallride = teethwidth * 2 + slagmargin
-    var smallslag = teethwidth + slagmargin
-    var smallRadius = calcradius(smallCircumference)
-    // var addendum = 0.5//should be long enough for driver gear to push the teeth far enough so the next teeth fa
-    var dedendummargin = 0.2
-    // var dedendum = addendum + dedendummargin//dedendum should sink as much ad the addendum rises plus a small margin
+    //both
+    //teethwidth
 
-    for(var i = 0; i < teethvalues.length;i++){
-        var teethvalue = teethvalues[i]
+    //big
+    //slag
+
+
+    //small
+    //min-coreradius
+    //slag
+
+    var currentpos = startpos.c()
+    var slagmargin = 0.5
+    var teethbasewidth = 2
+    var teethtopwidth = 2
+    var dedendummargin = 0.2
+
+    var bigslag = teethtopwidth + 2 * slagmargin + 1
+    var bigride = bigslag + teethbasewidth
+    
+    var smallslag = teethtopwidth + slagmargin
+    var smallride = smallslag + teethbasewidth
+    var smallCircumference = smallteethcount * smallride
+    var smallRadius = calcRadius(smallCircumference)
+
+    for(var i = 0; i < teethcounts.length;i++){
+        var teethcount = teethcounts[i]
         
-        var bigCircumference = teethvalue * bigride
-        var bigRadius = calcradius(bigCircumference)
+        var bigCircumference = teethcount * bigride
+        var bigRadius = calcRadius(bigCircumference)
         var parent = i == 0 ? null : last(gears)
-        var a = smallRadius
-        var b = smallRadius + bigRadius
         
-        // var bigaddendum = Math.sqrt(a ** 2 + b ** 2 - 2 * a * b * Math.cos((smallride - teethwidth / 4) / smallCircumference * TAU)) - bigRadius
-        var bigaddendum = 1.5
-        var smalladdendum = 0
-        var smalldedendum = bigaddendum + dedendummargin
-        var bigdedendum = smalladdendum + dedendummargin
+        // var a = smallRadius
+        // var b = smallRadius + bigRadius
+        // var smallgearangle = (smallride - teethbasewidth / 4) / smallCircumference * TAU
+        // var bigaddendum = Math.sqrt(a ** 2 + b ** 2 - 2 * a * b * Math.cos(smallgearangle)) - bigRadius
+
+        var X = 2.5
+        var bigaddendum = X
+        var smalladdendum = X
+        var smalldedendum = 0
+        var bigdedendum = 0
 
         var bigdriver = new Gear({
             parent:parent,
             name:alphabet[ai++],
             pos:currentpos.c(),
-            teeth:teethvalues[i],
+            teeth:teethcounts[i],
             ride:bigride,
             slag:bigslag,
             radius:bigRadius,
             circumference:bigCircumference,
             addendum:bigaddendum,
             dedendum:bigdedendum,
-            slopewidth:teethwidth / 4,
             axleConnected:true,
+            teethbasewidth:teethbasewidth,
+            teethtopwidth:teethtopwidth,
+            level:0,
         })
         if(parent){
             parent.children = [bigdriver]
         }
         gears.push(bigdriver)
         
-        currentpos.x += smallRadius + bigRadius
+        currentpos.x += smallRadius + bigRadius + X + dedendummargin
+
+        var smallslopeangle = teethbasewidth / 4 / calcCircumference(smallRadius - smalldedendum)
+        var smallteethcoreangle = teethtopwidth / smallCircumference
+        var smallslagangle = smallslag / smallCircumference
+        var rideangle = smallslopeangle * 2 + smallteethcoreangle + smallslagangle
+        var x = smallteethcount * rideangle
         var smalldriven = new Gear({
             parent:bigdriver,
             name:alphabet[ai++],
             pos:currentpos.c(),
-            teeth:6,
+            teeth:smallteethcount,
             ride:smallride,
             slag:smallslag,
             radius:smallRadius,
             circumference:smallCircumference,
             addendum:smalladdendum,
             dedendum:smalldedendum,
-            slopewidth:teethwidth / 4,
             axleConnected:false,
+            teethbasewidth:teethbasewidth,
+            teethtopwidth:teethtopwidth,
+            level:1,
         })
         gears.push(smalldriven)
         bigdriver.children = [smalldriven]
     }
+
+    var teeth = 15
+    var radius = 15
+    var circ = calcCircumference(radius)
+    var ride = circ / teeth
+    var parent = last(gears)
+    var secondsgear = new Gear({
+        parent:parent,
+        name:alphabet[ai++],
+        pos:currentpos.c(),
+        teeth:teeth,
+        ride:ride,
+        slag:ride - teethbasewidth,
+        circumference:circ,
+        radius:radius,
+        addendum:2,
+        dedendum:0,
+        axleConnected:true,
+        teethbasewidth:teethbasewidth,
+        teethtopwidth:teethtopwidth,
+    })
+    parent.children = [secondsgear]
+    gears.push(secondsgear)
 
     
     return gears
@@ -119,21 +184,40 @@ function generateGears(teethvalues:number[],firstradius,startpos:Vector):Gear[]{
 
 function drawgear(gear:Gear){
     var path:Vector[] = []
+
+    //slag . teethbottom
+
+    var rideangle = gear.ride / gear.circumference
     var slagangle = gear.slag / gear.circumference
-    var teethriseangle = gear.slopewidth / gear.circumference
-    var teethcoreangle = (gear.ride - gear.slag - 2 * gear.slopewidth) / gear.circumference
-    var rot = gear.rotation
+    var teethbaseangle = gear.teethbasewidth / gear.circumference
+    var teethcoreangle = gear.teethtopwidth /  calcCircumference(gear.radius + gear.addendum)
+    var teethslopeangle = (teethbaseangle - teethcoreangle) / 2
+
+    
+    var x = slagangle + teethcoreangle + 2 * teethslopeangle//should equal rideangle
+    var shouldequal1 = x * gear.teeth
+
+    var halfteethrotation = teethslopeangle + teethcoreangle / 2
+    var rot = gear.rotation - halfteethrotation
+    if(gear.teeth  == 8){
+        rot += rideangle / 2
+    }
+
     var inner = gear.radius - gear.dedendum
     var outer = gear.radius + gear.addendum
 
+    ctxt.fillStyle = 'black'
+    circle(new Vector(0,-inner + 1).rotate2d(gear.rotation).add(gear.pos),0.5,true)
     ctxt.beginPath()
     moveTo(new Vector(0,-inner).rotate2d(rot).add(gear.pos))
     for(var i = 0; i < gear.teeth;i++){
 
         lineTo(new Vector(0,-inner).rotate2d(rot).add(gear.pos))
-        lineTo(new Vector(0,-outer).rotate2d(rot += teethriseangle).add(gear.pos))
-        lineTo(new Vector(0,-outer).rotate2d(rot += teethcoreangle).add(gear.pos))
-        var arcstart = new Vector(0,-inner).rotate2d(rot += teethriseangle).add(gear.pos)
+        var arcstart = new Vector(0,-outer).rotate2d(rot += teethslopeangle).add(gear.pos)
+        var arcend = new Vector(0,-outer).rotate2d(rot += teethcoreangle).add(gear.pos)
+        lineTo(arcstart)
+        arcTo(arcstart,arcend,gear.pos)
+        var arcstart = new Vector(0,-inner).rotate2d(rot += teethslopeangle).add(gear.pos)
         var arcend = new Vector(0,-inner).rotate2d(rot += slagangle).add(gear.pos)
         lineTo(arcstart)
         arcTo(arcstart,arcend,gear.pos)
@@ -142,11 +226,21 @@ function drawgear(gear:Gear){
     circle(gear.pos,0.7,false)
     ctxt.textAlign = 'center'
     ctxt.textBaseline = 'middle'
-    if(gear.axleConnected){
+    if(gear.axleConnected || last(gears) == gear){
         ctxt.fillText(gear.name,gear.pos.x,gear.pos.y - 15)
+        ctxt.fillText(gear.rotation.toFixed(2),gear.pos.x,gear.pos.y - 10)
     }else{
         ctxt.fillText(gear.name,gear.pos.x,gear.pos.y + 5)
     }
+
+    var gearheight = 3
+    if(gear.axleConnected){
+        ctxt.fillStyle = 'black'
+    }else{
+        ctxt.fillStyle = 'red'
+    }
+    var gearwidth = gear.radius + gear.addendum
+    ctxt.fillRect(gear.pos.x - gearwidth,gear.pos.y + 50 + gear.level * gearheight,gearwidth * 2, gearheight)
 }
 
 
@@ -154,7 +248,7 @@ function drawgear(gear:Gear){
 
 
 
-// document.querySelector('#gearinfo').innerHTML = JSON.stringify(gears.map(g => g.summarize()),null,2)
+document.querySelector('#gearinfo').innerHTML = JSON.stringify(gears.map(g => g.summarize()),null,2)
 
 document.addEventListener('mousedown',() => {
     dragging = true
@@ -186,23 +280,26 @@ canvas.addEventListener('wheel', (e) => {
 
 loop((dt) => {
     var rotspeed = 0.03
-    if(keys['w']){
+    if(keys['Shift']){
+        rotspeed *= 0.1
+    }
+    if(keycodes['KeyW']){
         gears[0].rotate(dt * rotspeed)
     }
-    if(keys['s']){
+    if(keycodes['KeyS']){
         gears[0].rotate(-dt * rotspeed)
    }
 
-    if(keys['e']){
+    if(keycodes['KeyE']){
         gears[0].rotate(dt * rotspeed,false)
     }
-    if(keys['d']){
+    if(keycodes['KeyD']){
         gears[0].rotate(-dt * rotspeed,false)
     }
-    if(keys['t']){
+    if(keycodes['KeyT']){
         gears[1].rotate(dt * rotspeed,false)
     }
-    if(keys['g']){
+    if(keycodes['KeyG']){
         gears[1].rotate(-dt * rotspeed,false)
     }
     ctxt.lineWidth = camera.scale.x

@@ -12,8 +12,12 @@ class Gear{
     circumference:number
     addendum:number
     dedendum:number
-    slopewidth:number
     rotation = 0
+    teethbasewidth:number
+    teethtopwidth:number
+    level = 0
+    // teethslopeangle
+    // teethcoreangle
     
     parent:Gear
     children:Gear[] = []
@@ -40,7 +44,7 @@ class Gear{
     fill(ride){
         this.ride = ride
         this.circumference = this.teeth * ride
-        this.radius = calcradius(this.circumference)
+        this.radius = calcRadius(this.circumference)
         this.angle = 1 / this.teeth
         // if(this.geartype == 'triangleteeth' && this.axleConnected){
         //     this.rotation += ((this.teeth / 4) % 2) * this.angle 
@@ -93,11 +97,11 @@ class Gear{
     }
 }
 
-function calccircumference(radius){
+function calcCircumference(radius){
     return radius * TAU
 }
 
-function calcradius(circumference){
+function calcRadius(circumference){
     return circumference / TAU
 }
 

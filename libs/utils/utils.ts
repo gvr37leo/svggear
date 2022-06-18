@@ -77,13 +77,16 @@ function mod(number: number, modulus: number){
 }
 
 var keys = {}
+var keycodes = {}
 
 document.addEventListener('keydown', (e) => {
     keys[e.key] = true
+    keycodes[e.code] = true
 })
 
 document.addEventListener('keyup', (e) => {
     keys[e.key] = false
+    keycodes[e.code] = false
 })
 
 function getMoveInput():Vector{
