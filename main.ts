@@ -76,10 +76,10 @@ function generateGears(teethcounts:number[],smallteethcount,startpos:Vector):Gea
     //slag
 
     var currentpos = startpos.c()
-    var slagmargin = 0.5
-    var teethbasewidth = 2
-    var teethtopwidth = 2
-    var dedendummargin = 0.2
+    var slagmargin = 0.25
+    var teethbasewidth = 1
+    var teethtopwidth = 1
+    var dedendummargin = 0.1
 
     var bigslag = teethtopwidth + 2 * slagmargin + 1
     var bigride = bigslag + teethbasewidth
@@ -101,9 +101,9 @@ function generateGears(teethcounts:number[],smallteethcount,startpos:Vector):Gea
         // var smallgearangle = (smallride - teethbasewidth / 4) / smallCircumference * TAU
         // var bigaddendum = Math.sqrt(a ** 2 + b ** 2 - 2 * a * b * Math.cos(smallgearangle)) - bigRadius
 
-        var X = 2.5
-        var bigaddendum = X
-        var smalladdendum = X
+        var teethHeight = 1.25
+        var bigaddendum = teethHeight
+        var smalladdendum = teethHeight
         var smalldedendum = 0
         var bigdedendum = 0
 
@@ -128,7 +128,7 @@ function generateGears(teethcounts:number[],smallteethcount,startpos:Vector):Gea
         }
         gears.push(bigdriver)
         
-        currentpos.x += smallRadius + bigRadius + X + dedendummargin
+        currentpos.x += smallRadius + bigRadius + teethHeight + dedendummargin
 
         var smallslopeangle = teethbasewidth / 4 / calcCircumference(smallRadius - smalldedendum)
         var smallteethcoreangle = teethtopwidth / smallCircumference
@@ -169,7 +169,7 @@ function generateGears(teethcounts:number[],smallteethcount,startpos:Vector):Gea
         slag:ride - teethbasewidth,
         circumference:circ,
         radius:radius,
-        addendum:2,
+        addendum:teethHeight,
         dedendum:0,
         axleConnected:true,
         teethbasewidth:teethbasewidth,
@@ -227,8 +227,8 @@ function drawgear(gear:Gear){
     ctxt.textAlign = 'center'
     ctxt.textBaseline = 'middle'
     if(gear.axleConnected || last(gears) == gear){
-        ctxt.fillText(gear.name,gear.pos.x,gear.pos.y - 15)
-        ctxt.fillText(gear.rotation.toFixed(2),gear.pos.x,gear.pos.y - 10)
+        ctxt.fillText(gear.name,gear.pos.x,gear.pos.y - 20)
+        ctxt.fillText(gear.rotation.toFixed(2),gear.pos.x,gear.pos.y - 25)
     }else{
         ctxt.fillText(gear.name,gear.pos.x,gear.pos.y + 5)
     }
