@@ -125,7 +125,7 @@ function generateGears(teethcounts:number[],smallteethcount,startpos:Vector):Gea
         })
         if(parent){
             parent.children = [bigdriver]
-        }
+        } 
         gears.push(bigdriver)
         
         currentpos.x += smallRadius + bigRadius + teethHeight + dedendummargin
